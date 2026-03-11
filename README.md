@@ -1,60 +1,52 @@
 # Sentiment Analysis API
 
-A machine learning-powered REST API for sentiment analysis built with FastAPI and scikit-learn. This project trains a sentiment classifier on the IMDb movie review dataset and exposes predictions through a fast, production-ready API.
-
 ## Project Overview
 
-This project provides a complete end-to-end sentiment analysis solution:
-- **Data Processing**: Cleans and preprocesses text data (HTML removal, lowercasing, special character removal)
-- **Model Training**: Trains a Logistic Regression classifier using TF-IDF features
-- **API Service**: FastAPI endpoints for single and batch predictions
-- **Model Persistence**: Saves trained model and vectorizer for deployment
+This project builds a sentiment classification model and exposes it through a FastAPI REST API. The API analyzes text and returns sentiment predictions classified as **Positive**, **Negative**, or **Neutral**, along with a confidence score.
 
-The API classifies text as **positive** or **negative** and returns a confidence score.
+The model is trained on the IMDb movie review dataset using TF-IDF vectorization and Logistic Regression. Neutral sentiment is inferred using probability thresholds, as the training dataset contains only binary labels (positive/negative).
 
-## Technologies Used
+## Requirements
 
-- **Python 3.8+**
-- **FastAPI** - Modern web framework for building APIs
-- **scikit-learn** - Machine learning library for training and inference
-- **pandas** - Data manipulation and analysis
-- **numpy** - Numerical computing
-- **joblib** - Model serialization
-- **uvicorn** - ASGI server for running FastAPI
-- **Pydantic** - Data validation using Python type hints
+- **Python 3.10 or newer**
+- **pip** package manager
 
 ## Project Structure
 
 ```
-sentiment-analysis-api/
-├── app/
+sentiment-analysis-api
+│
+├── app
 │   ├── main.py           # FastAPI application with endpoints
 │   ├── model.py          # Model loading and prediction logic
 │   └── schemas.py        # Pydantic models for request/response
-├── data/
+│
+├── data
 │   └── IMDB_Dataset.csv  # Training dataset
-├── model/
+│
+├── model
 │   └── model.pkl         # Trained model and vectorizer (generated)
+│
 ├── train.py              # Model training script
 ├── requirements.txt      # Python dependencies
-├── .gitignore           # Git ignore file
-└── README.md            # This file
+└── README.md             # This file
 ```
 
 ## Setup Instructions
 
-### 1. Clone the repository
+### Step 1 – Clone the repository
+
 ```bash
-git clone <repository-url>
+git clone <repo-url>
 cd sentiment-analysis-api
 ```
 
-### 2. Create a virtual environment
+### Step 2 – Create a virtual environment
+
 ```bash
 python -m venv venv
 ```
 
-### 3. Activate the virtual environment
 **Windows:**
 ```bash
 venv\Scripts\activate
@@ -65,226 +57,110 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-### 4. Install dependencies
+### Step 3 – Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Download the dataset
-Place the `IMDB_Dataset.csv` file in the `data/` directory. You can download it from [Kaggle]
-
-## How to Train the Model
-
-Run the training script to preprocess the data, train the model, and save it to disk:
+### Step 4 – Train the model
 
 ```bash
 python train.py
 ```
 
-This script will:
-1. Load the IMDb dataset (50,000 movie reviews)
-2. Clean and preprocess the text
-3. Convert sentiment labels to numeric values (positive=1, negative=0)
-4. Split data into 80% training and 20% testing
-5. Convert text to TF-IDF features (max 5000 features)
-6. Train a Logistic Regression classifier
-7. Evaluate the model and print metrics
-8. Save the trained pipeline to `model/model.pkl`
+This will train the TF-IDF + Logistic Regression model and save it to `model/model.pkl`.
 
-**Training time:** ~2-3 minutes on a modern CPU
+**Note:** Training takes approximately 2-3 minutes on a modern CPU.
 
-## How to Run the API
-
-Start the FastAPI server using uvicorn:
+### Step 5 – Start the API server
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at: `http://127.0.0.1:8000`
+The API will start at:
+- **Base URL:** http://127.0.0.1:8000
 
-**Interactive API documentation:**
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
+Interactive API documentation is available at:
+- **Swagger UI:** http://127.0.0.1:8000/docs
+- **ReDoc:** http://127.0.0.1:8000/redoc
 
-### Available Endpoints
+## API Endpoints
 
-#### Health Check
+### Health Check
 ```
 GET /health
 ```
-Returns: `{"status": "ok"}`
 
-#### Single Prediction
+### Single Prediction
 ```
 POST /predict
 ```
-Request body:
-```json
-{
-  "text": "This movie was absolutely fantastic!"
-}
-```
 
-Response:
-```json
-{
-  "text": "This movie was absolutely fantastic!",
-  "sentiment": "positive",
-  "confidence": 0.94
-}
-```
-
-#### Batch Prediction
+### Batch Prediction
 ```
 POST /predict/batch
 ```
-Request body:
-```json
-{
-  "texts": [
-    "This movie was terrible",
-    "I loved every minute of it",
-    "Not my cup of tea"
-  ]
-}
-```
 
-Response:
-```json
-{
-  "predictions": [
-    {
-      "text": "This movie was terrible",
-      "sentiment": "negative",
-      "confidence": 0.89
-    },
-    {
-      "text": "I loved every minute of it",
-      "sentiment": "positive",
-      "confidence": 0.95
-    },
-    {
-      "text": "Not my cup of tea",
-      "sentiment": "negative",
-      "confidence": 0.72
-    }
-  ]
-}
-```
-
-## Example API Usage
-
-### Using curl
+## Example API Request
 
 **Single prediction:**
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict" \
-  -H "Content-Type: application/json" \
-  -d "{\"text\": \"This movie was absolutely fantastic!\"}"
+-H "Content-Type: application/json" \
+-d '{
+  "text": "I absolutely love how fast the delivery was!"
+}'
+```
+
+**Example response:**
+
+```json
+{
+  "text": "I absolutely love how fast the delivery was!",
+  "sentiment": "positive",
+  "confidence": 0.97
+}
 ```
 
 **Batch prediction:**
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict/batch" \
-  -H "Content-Type: application/json" \
-  -d "{\"texts\": [\"Great movie!\", \"Terrible film.\"]}"
+-H "Content-Type: application/json" \
+-d '{
+  "texts": [
+    "This movie was terrible",
+    "I loved every minute of it",
+    "It was okay, nothing special"
+  ]
+}'
 ```
 
-### Using Python requests
-```python
-import requests
+## Approach
 
-# Single prediction
-response = requests.post(
-    "http://127.0.0.1:8000/predict",
-    json={"text": "This movie was absolutely fantastic!"}
-)
-print(response.json())
+The model uses TF-IDF vectorization to convert text into numerical features and Logistic Regression for classification. The IMDb dataset contains 50,000 labeled movie reviews that allow the model to learn patterns associated with positive and negative sentiment. Neutral sentiment is inferred using probability thresholds—when the model's confidence is low (probability difference < 0.2), the prediction is classified as neutral. Logistic Regression was chosen because it is efficient, interpretable, and performs well for text classification tasks with TF-IDF features. The model achieves approximately 89% accuracy on the test set. With more time, the system could be improved by using transformer-based models such as BERT and adding better neutral sentiment detection through a multi-class training approach.
 
-# Batch prediction
-response = requests.post(
-    "http://127.0.0.1:8000/predict/batch",
-    json={"texts": ["Great movie!", "Terrible film."]}
-)
-print(response.json())
-```
+## Model Performance
 
-## Model Choice: TF-IDF + Logistic Regression
+The trained model achieves the following metrics on the test set:
 
-### Why this approach?
+- **Accuracy:** ~0.89
+- **Precision:** ~0.89
+- **Recall:** ~0.89
+- **F1 Score:** ~0.89
 
-**TF-IDF (Term Frequency-Inverse Document Frequency):**
-- Converts text into numerical features
-- Weights important words higher while downweighting common words
-- Captures word importance in the context of the entire dataset
-- Fast and memory-efficient for inference
+## Technologies Used
 
-**Logistic Regression:**
-- Simple yet powerful linear classifier
-- Fast training and prediction
-- Interpretable coefficients
-- Works well with high-dimensional sparse data (like TF-IDF)
-- Low risk of overfitting with proper regularization
-- Provides probability scores (confidence)
-
-This combination offers an excellent **baseline model** that is:
-- **Fast**: Sub-millisecond predictions
-- **Lightweight**: Small model size (~10MB)
-- **Scalable**: Can handle high request volumes
-- **Performant**: Achieves ~88-90% accuracy on sentiment classification
-
-## Model Evaluation Metrics
-
-The trained model achieves the following performance on the test set (10,000 reviews):
-
-| Metric    | Score  | Description |
-|-----------|--------|-------------|
-| **Accuracy**  | ~0.89  | Overall correct predictions |
-| **Precision** | ~0.89  | Proportion of positive predictions that were correct |
-| **Recall**    | ~0.89  | Proportion of actual positives correctly identified |
-| **F1 Score**  | ~0.89  | Harmonic mean of precision and recall |
-
-These metrics indicate a well-balanced model with strong performance on both positive and negative sentiment classification.
-
-## Future Improvements
-
-### Model Enhancements
-- [ ] Experiment with deep learning models (LSTM, BERT, RoBERTa)
-- [ ] Add support for neutral sentiment
-- [ ] Implement ensemble methods (combining multiple models)
-- [ ] Fine-tune hyperparameters using grid search
-- [ ] Add n-gram features (bigrams, trigrams)
-- [ ] Implement cross-validation for more robust evaluation
-
-### API Features
-- [ ] Add rate limiting and authentication
-- [ ] Implement caching for repeated queries
-- [ ] Add logging and monitoring (Prometheus, Grafana)
-- [ ] Create async batch processing for large requests
-- [ ] Add confidence threshold filtering
-- [ ] Support for multiple languages
-
-### Infrastructure
-- [ ] Containerize with Docker
-- [ ] Deploy to cloud (AWS, GCP, Azure)
-- [ ] Add CI/CD pipeline
-- [ ] Implement A/B testing for model versions
-- [ ] Add unit and integration tests
-- [ ] Create performance benchmarks
-
-### Data
-- [ ] Expand to multi-domain sentiment analysis
-- [ ] Add data augmentation techniques
-- [ ] Implement active learning for model improvement
-- [ ] Handle emojis and slang better
+- **FastAPI** - Web framework for building APIs
+- **scikit-learn** - Machine learning library
+- **pandas** - Data manipulation
+- **joblib** - Model serialization
+- **uvicorn** - ASGI server
 
 ## License
 
 This project is for educational purposes.
 
-## Acknowledgments
-
-- IMDb dataset from Kaggle
-- FastAPI documentation and community
-- scikit-learn contributors

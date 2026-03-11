@@ -26,16 +26,22 @@ def predict(request: PredictRequest):
         
     Returns:
         PredictResponse with sentiment prediction and confidence score
+        
+    Raises:
+        HTTPException: If text validation fails
     """
-    # Call predict_sentiment function
-    sentiment, confidence = predict_sentiment(request.text)
-    
-    # Return response
-    return PredictResponse(
-        text=request.text,
-        sentiment=sentiment,
-        confidence=confidence
-    )
+    try:
+        # Call predict_sentiment function
+        sentiment, confidence = predict_sentiment(request.text)
+        
+        # Return response
+        return PredictResponse(
+            text=request.text,
+            sentiment=sentiment,
+            confidence=confidence
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/predict/batch", response_model=BatchPredictResponse)
 def predict_batch(request: BatchPredictRequest):
@@ -47,17 +53,26 @@ def predict_batch(request: BatchPredictRequest):
         
     Returns:
         BatchPredictResponse with a list of predictions
+        
+    Raises:
+        HTTPException: If any text validation fails
     """
     predictions = []
     
-    for text in request.texts:
-        sentiment, confidence = predict_sentiment(text)
-        predictions.append(
-            PredictResponse(
-                text=text,
-                sentiment=sentiment,
-                confidence=confidence
+    for i, text in enumerate(request.texts):
+        try:
+            sentiment, confidence = predict_sentiment(text)
+            predictions.append(
+                PredictResponse(
+                    text=text,
+                    sentiment=sentiment,
+                    confidence=confidence
+                )
             )
-        )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Error at index {i}: {str(e)}"
+            )
     
     return BatchPredictResponse(predictions=predictions)
