@@ -1,5 +1,5 @@
-from fastapi import FastAPI
-from app.schemas import PredictRequest, PredictResponse
+from fastapi import FastAPI, HTTPException
+from app.schemas import PredictRequest, PredictResponse, BatchPredictRequest, BatchPredictResponse
 from app.model import predict_sentiment
 
 # Create FastAPI application
@@ -36,3 +36,28 @@ def predict(request: PredictRequest):
         sentiment=sentiment,
         confidence=confidence
     )
+
+@app.post("/predict/batch", response_model=BatchPredictResponse)
+def predict_batch(request: BatchPredictRequest):
+    """
+    Predict sentiment for multiple texts.
+    
+    Args:
+        request: BatchPredictRequest containing a list of texts to analyze
+        
+    Returns:
+        BatchPredictResponse with a list of predictions
+    """
+    predictions = []
+    
+    for text in request.texts:
+        sentiment, confidence = predict_sentiment(text)
+        predictions.append(
+            PredictResponse(
+                text=text,
+                sentiment=sentiment,
+                confidence=confidence
+            )
+        )
+    
+    return BatchPredictResponse(predictions=predictions)
